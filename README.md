@@ -340,6 +340,316 @@ The Astro-based orchestrator:
 - ✅ **Performance** - Only load what you need, when you need it
 - ✅ **Scalable** - Easy to add new microfrontends
 
+## ⚖️ Architecture Comparison: Astro Islands vs Module Federation
+
+This project uses **Astro's Island architecture with HTTP imports**, which differs significantly from **Webpack Module Federation**. Understanding these differences is crucial for making informed architectural decisions.
+
+### Astro Island Architecture (This Project)
+
+**How It Works:**
+- Microfrontends are built as standalone ESM bundles (`bundle.js`)
+- Shell loads bundles via HTTP imports: `import MFE from "http://localhost:7100/bundle.js"`
+- Shared dependencies distributed via Import Maps (esm.sh CDN)
+- Each microfrontend requires a **full build** before being served
+- Development uses preview mode (serving built bundles)
+
+### Module Federation (Webpack/Vite/Rspack)
+
+**How It Works:**
+- Microfrontends expose modules dynamically via federation plugin
+- Shell loads remote modules at runtime with automatic dependency sharing
+- Shared dependencies bundled once and deduplicated automatically
+- True development hot reload (HMR) across all microfrontends
+- TypeScript support with shared types between host and remotes
+
+---
+
+### 🔴 Key Limitations of Astro Island Approach
+
+#### 1. **No True Development Hot Reload**
+
+**Astro Islands:**
+- ❌ Microfrontends must be **built before every change** (`pnpm build:mfes`)
+- ❌ Cannot run microfrontends in dev mode alongside shell
+- ❌ Any code change requires:
+  1. Stop dev server
+  2. Rebuild microfrontend (`vite build`)
+  3. Restart servers
+- ❌ Slow feedback loop for iterative development
+- ⚠️ Current workaround: Run microfrontends in preview mode (serves pre-built bundles)
+
+**Module Federation:**
+- ✅ **True HMR** - Changes reflect instantly without rebuild
+- ✅ All microfrontends run in dev mode simultaneously
+- ✅ Instant feedback loop (< 1 second)
+- ✅ Preserves application state during hot reload
+- ✅ Vite/Webpack dev server handles all updates automatically
+
+**Example Workflow Comparison:**
+
+```bash
+# Astro Islands (This Project)
+# Make a change to app-react-1/src/pages/Users.jsx
+pnpm build:mfes                    # ~5-10 seconds
+# Restart dev server
+# See changes                       # Total: ~15 seconds
+
+# Module Federation
+# Make a change to app-react-1/src/pages/Users.jsx
+# See changes instantly              # Total: < 1 second (HMR)
+```
+
+---
+
+#### 2. **No Runtime TypeScript Support**
+
+**Astro Islands:**
+- ❌ No shared TypeScript types between shell and microfrontends
+- ❌ No type safety when importing remote modules
+- ❌ Each microfrontend has isolated TypeScript config
+- ❌ Shell cannot infer types from microfrontend exports
+- ❌ Manual type definitions required for integration points
+
+**Module Federation:**
+- ✅ **Full TypeScript support** with `@module-federation/typescript`
+- ✅ Automatic type generation for federated modules
+- ✅ Type-safe imports across microfrontends
+- ✅ IDE autocomplete and IntelliSense across boundaries
+- ✅ Compile-time type checking for remote modules
+
+**Example:**
+
+```typescript
+// Astro Islands - No type inference
+import MicroFrontendReact1 from "http://localhost:7100/bundle.js";
+// ❌ Type: any - no autocomplete, no type safety
+
+// Module Federation - Full type support
+import { App } from "appReact1/App";
+// ✅ Type: React.ComponentType<AppProps>
+// ✅ Full autocomplete and type checking
+```
+
+---
+
+#### 3. **Build-First Development Requirement**
+
+**Astro Islands:**
+- ❌ Cannot develop against source code directly
+- ❌ `pnpm dev` script must build all microfrontends first
+- ❌ Slow initial startup (~5-15 seconds for builds)
+- ❌ Debugging built bundles (not source) in browser
+- ❌ Source maps required but may not be perfect
+
+```javascript
+// Current dev script - requires build step
+"dev": "pnpm build:mfes && concurrently \"pnpm serve:mfes\" \"pnpm dev:shell\""
+```
+
+**Module Federation:**
+- ✅ Develop against **source code** in real-time
+- ✅ Instant startup (no build step required)
+- ✅ Debug actual source files in browser
+- ✅ Native browser dev tools experience
+- ✅ Perfect source maps automatically
+
+---
+
+#### 4. **Limited Dynamic Module Loading**
+
+**Astro Islands:**
+- ❌ HTTP imports are static strings (must know URL at build time)
+- ❌ Difficult to load modules conditionally
+- ❌ Cannot easily implement plugin systems
+- ❌ Hard to version and rollback individual modules
+- ❌ No runtime module discovery
+
+```javascript
+// Static - must know URL at compile time
+import MFE from "http://localhost:7100/bundle.js";
+```
+
+**Module Federation:**
+- ✅ **Dynamic imports** at runtime
+- ✅ Conditional loading based on user permissions/features
+- ✅ Plugin architectures with runtime discovery
+- ✅ Version negotiation and fallbacks
+- ✅ A/B testing different module versions
+
+```javascript
+// Dynamic - load based on runtime conditions
+const module = await import(`${remoteUrl}/module`);
+```
+
+---
+
+#### 5. **CORS and Networking Complexity**
+
+**Astro Islands:**
+- ❌ **CORS must be configured** on every microfrontend server
+- ❌ Network requests for every bundle (even localhost)
+- ❌ Cannot work offline during development
+- ❌ Browser caching issues during development
+- ❌ Additional Express servers required for CORS
+
+```javascript
+// Every server needs CORS config
+server.use(cors({ origin: true }));
+```
+
+**Module Federation:**
+- ✅ No CORS issues (modules bundled by build tool)
+- ✅ Works offline after initial load
+- ✅ Better caching strategies
+- ✅ No additional server configuration needed
+- ✅ Simplified development setup
+
+---
+
+#### 6. **Dependency Version Management**
+
+**Astro Islands:**
+- ❌ Import maps hardcode specific versions
+- ❌ All apps must use exact same dependency versions
+- ❌ Updating React version requires:
+  - Updating import map in shell
+  - Updating all microfrontend package.json files
+  - Full rebuild of all apps
+- ❌ No automatic version negotiation
+
+```html
+<!-- Shell must specify exact versions -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.2.0",  <!--❌ Hardcoded -->
+    "react-dom": "https://esm.sh/react-dom@19.2.0"
+  }
+}
+</script>
+```
+
+**Module Federation:**
+- ✅ **Automatic dependency sharing** and deduplication
+- ✅ Version negotiation (use highest compatible version)
+- ✅ Fallback strategies for incompatible versions
+- ✅ Singleton dependencies (React, Vue) shared automatically
+- ✅ Update one app without affecting others
+
+---
+
+#### 7. **State Management and Communication**
+
+**Astro Islands:**
+- ⚠️ Shared state requires manual implementation
+- ⚠️ Custom events or global state managers needed
+- ⚠️ No built-in communication patterns
+- ⚠️ Difficult to share context across microfrontends
+
+**Module Federation:**
+- ✅ **Built-in shared modules** for state management
+- ✅ Can expose Redux/Zustand stores as federated modules
+- ✅ React Context can be shared across remotes
+- ✅ Event buses can be federated
+- ✅ Established patterns for communication
+
+---
+
+#### 8. **Performance Implications**
+
+**Astro Islands:**
+- ⚠️ Import maps load dependencies from CDN (network latency)
+- ⚠️ Separate HTTP requests for each bundle
+- ⚠️ Browser must download React/Vue from esm.sh
+- ⚠️ Cold start can be slower
+- ✅ Better for SSR/SSG scenarios
+- ✅ Smaller initial bundle (dependencies external)
+
+**Module Federation:**
+- ✅ Dependencies bundled locally (faster initial load)
+- ✅ Single request for shared dependencies
+- ✅ Better performance for client-side apps
+- ✅ Automatic code splitting and optimization
+- ⚠️ Larger initial bundle (includes shared deps)
+
+---
+
+### 📊 Feature Comparison Table
+
+| Feature | Astro Islands | Module Federation |
+|---------|---------------|-------------------|
+| **Development HMR** | ❌ No - requires rebuild | ✅ Yes - instant |
+| **TypeScript Support** | ❌ No runtime types | ✅ Full type safety |
+| **Startup Time** | ❌ Slow (build required) | ✅ Instant |
+| **Live Debugging** | ⚠️ Built bundles only | ✅ Source code |
+| **Dynamic Loading** | ❌ Static URLs only | ✅ Runtime dynamic |
+| **CORS Setup** | ❌ Required | ✅ Not needed |
+| **Version Management** | ❌ Manual/hardcoded | ✅ Automatic |
+| **State Sharing** | ⚠️ Manual implementation | ✅ Built-in patterns |
+| **Framework Support** | ✅ Any framework | ✅ Any framework |
+| **Independent Deploy** | ✅ Yes | ✅ Yes |
+| **SSR/SSG Support** | ✅ Excellent | ⚠️ Limited |
+| **Learning Curve** | ✅ Simple | ⚠️ Moderate |
+| **Production Bundle** | ✅ Smaller | ⚠️ Larger |
+| **Build Tool** | ✅ Any (Vite, Webpack) | ⚠️ Webpack/Rspack/Vite |
+
+---
+
+### 🎯 When to Use Each Approach
+
+#### Choose **Astro Islands** (This Project) When:
+
+- ✅ You need **SSR/SSG** (static site generation)
+- ✅ Your site is **content-heavy** (blogs, docs, marketing)
+- ✅ You want **framework flexibility** without build tool constraints
+- ✅ You prefer **simple** architecture (no complex federation config)
+- ✅ Development speed is not critical (infrequent changes)
+- ✅ You don't need TypeScript types across boundaries
+- ✅ Your microfrontends are relatively **independent** (minimal shared state)
+
+#### Choose **Module Federation** When:
+
+- ✅ You need **fast development iteration** (frequent changes)
+- ✅ Your app is **highly interactive** (dashboard, SaaS platform)
+- ✅ You require **TypeScript support** across microfrontends
+- ✅ You need **runtime dynamic module loading**
+- ✅ You have **complex shared state** requirements
+- ✅ Development teams work on features **simultaneously**
+- ✅ You need **A/B testing** or feature flags at module level
+- ✅ Performance is critical (avoid CDN dependencies)
+
+---
+
+### 💡 Hybrid Approach Recommendation
+
+For the best of both worlds, consider:
+
+1. **Development**: Use Module Federation for fast HMR and TypeScript support
+2. **Production**: Build as ESM bundles for independent deployment
+3. **Shell**: Use Astro for SSG/SSR capabilities
+4. **Remotes**: Use Module Federation for development, compile to ESM for production
+
+This gives you development velocity **and** deployment flexibility.
+
+---
+
+### 🔄 Migration Path
+
+If you need Module Federation features, you can migrate incrementally:
+
+1. Keep Astro shell for routing and SSR
+2. Replace HTTP imports with `@module-federation/vite` or Webpack Module Federation
+3. Configure federation plugin in each microfrontend
+4. Update shell to use federation runtime
+5. Maintain same independent deployment model
+
+**Resources:**
+- [Module Federation Examples](https://github.com/module-federation/module-federation-examples)
+- [Vite Plugin Federation](https://github.com/originjs/vite-plugin-federation)
+- [@module-federation/enhanced](https://github.com/module-federation/core)
+
+---
+
 ## 🔧 Technical Details
 
 ### Import Maps

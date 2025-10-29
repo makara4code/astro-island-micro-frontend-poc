@@ -1,0 +1,31 @@
+{
+  "name": "astro-microfrontends-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Astro microfrontends demo with client-side composition",
+  "scripts": {
+    "clean": "pnpm -r exec rm -rf node_modules dist",
+    "build": "pnpm -r --filter \"!**/server\" build",
+    "build:mfes": "pnpm --filter ./app-react-1 --filter ./app-react-2 --filter ./app-solid build",
+    "build:shell": "pnpm --filter ./shell build",
+    "dev:app-react-1": "pnpm --filter ./app-react-1 dev",
+    "dev:app-react-2": "pnpm --filter ./app-react-2 dev",
+    "dev:app-solid": "pnpm --filter ./app-solid dev",
+    "dev:shell": "pnpm --filter ./shell dev",
+    "preview:app-react-1": "pnpm --filter ./app-react-1 preview",
+    "preview:app-react-2": "pnpm --filter ./app-react-2 preview",
+    "preview:app-solid": "pnpm --filter ./app-solid preview",
+    "preview:shell": "pnpm --filter ./shell preview",
+    "start:mfes": "concurrently \"pnpm preview:app-react-1\" \"pnpm preview:app-react-2\" \"pnpm preview:app-solid\"",
+    "start": "pnpm build:mfes && pnpm start:mfes",
+    "dev": "pnpm --parallel --filter ./app-react-1 --filter ./app-react-2 --filter ./app-solid --filter ./shell dev",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

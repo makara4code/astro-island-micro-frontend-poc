@@ -1,0 +1,24 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Settings & Integrations">
+  <div id="app-solid-root"></div>
+</Layout>
+
+<script>
+  import { render } from "solid-js/web";
+  import MicroFrontendSolid from "http://localhost:7300/bundle.js";
+
+  const container = document.getElementById("app-solid-root");
+  if (container) {
+    render(MicroFrontendSolid, container);
+  }
+</script>
+
+<style>
+  #app-solid-root {
+    min-height: 100vh;
+  }
+</style>
+

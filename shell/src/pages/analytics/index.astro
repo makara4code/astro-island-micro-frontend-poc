@@ -1,0 +1,25 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Analytics Dashboard">
+  <div id="app-react-2-root"></div>
+</Layout>
+
+<script>
+  import { createRoot } from "react-dom/client";
+  import MicroFrontendReact2 from "http://localhost:7200/bundle.js";
+
+  const container = document.getElementById("app-react-2-root");
+  if (container) {
+    const root = createRoot(container);
+    root.render(MicroFrontendReact2());
+  }
+</script>
+
+<style>
+  #app-react-2-root {
+    min-height: 100vh;
+  }
+</style>
+

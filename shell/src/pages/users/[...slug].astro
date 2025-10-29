@@ -1,0 +1,25 @@
+---
+export const prerender = false;
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="User Management">
+  <div id="app-react-1-root"></div>
+</Layout>
+
+<script>
+  import { createRoot } from "react-dom/client";
+  import MicroFrontendReact1 from "http://localhost:7100/bundle.js";
+
+  const container = document.getElementById("app-react-1-root");
+  if (container) {
+    const root = createRoot(container);
+    root.render(MicroFrontendReact1());
+  }
+</script>
+
+<style>
+  #app-react-1-root {
+    min-height: 100vh;
+  }
+</style>

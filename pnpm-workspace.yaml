@@ -6,8 +6,10 @@ packages:
   - "app-react-1"
   - "app-react-2"
   - "app-solid"
+  - "app-vue"
 
   # Server packages for each microfrontend
   - "app-react-1/server"
   - "app-react-2/server"
   - "app-solid/server"
+  - "app-vue/server"

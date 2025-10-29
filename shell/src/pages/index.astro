@@ -21,7 +21,7 @@ import Layout from "../layouts/Layout.astro";
         Astro Microfrontends
       </h1>
       <p class="hero-description">
-        A modern microfrontend architecture built with Astro, React, and
+        A modern microfrontend architecture built with Astro, React, Vue, and
         Solid.js
       </p>
     </div>
@@ -89,6 +89,42 @@ import Layout from "../layouts/Layout.astro";
           <div class="app-tech">
             <span class="tech-badge">React</span>
             <span class="tech-badge">Port 7200</span>
+          </div>
+        </div>
+        <div class="app-arrow">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width={2}
+              d="M9 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </a>
+
+      <!-- App Vue -->
+      <a href="/products" class="app-card">
+        <div
+          class="app-icon"
+          style="background: linear-gradient(135deg, #42b883, #35495e);"
+        >
+          <svg fill="none" stroke="white" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width={2}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            ></path>
+          </svg>
+        </div>
+        <div class="app-content">
+          <h3 class="app-name">Product Management</h3>
+          <p class="app-description">
+            Manage products, orders, and inventory with real-time tracking
+          </p>
+          <div class="app-tech">
+            <span class="tech-badge">Vue</span>
+            <span class="tech-badge">Port 7400</span>
           </div>
         </div>
         <div class="app-arrow">
@@ -176,7 +212,7 @@ import Layout from "../layouts/Layout.astro";
       </svg>
       <h3>Framework Agnostic</h3>
       <p>
-        Mix and match React, Solid.js, or any other framework in the same
+        Mix and match React, Vue, Solid.js, or any other framework in the same
         application
       </p>
     </div>

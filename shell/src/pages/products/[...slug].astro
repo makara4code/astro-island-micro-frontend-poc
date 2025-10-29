@@ -1,0 +1,20 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import MicroFrontendVue from "http://localhost:7400/bundle.js";
+
+export const prerender = false;
+---
+
+<Layout title="Products - Vue App">
+  <div id="app-vue-root"></div>
+</Layout>
+
+<script>
+  import { createApp } from "vue";
+  import MicroFrontendVue from "http://localhost:7400/bundle.js";
+
+  const { App, router } = MicroFrontendVue();
+  const app = createApp(App);
+  app.use(router);
+  app.mount("#app-vue-root");
+</script>

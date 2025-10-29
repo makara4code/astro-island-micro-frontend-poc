@@ -19,7 +19,8 @@
     "preview:all": "pnpm --parallel --filter ./app-react-1/server --filter ./app-react-2/server --filter ./app-solid/server --filter ./app-vue/server --filter ./shell start",
     "start": "pnpm build:all && pnpm preview:all",
     "dev": "pnpm --parallel --filter ./app-react-1 --filter ./app-react-2 --filter ./app-solid --filter ./app-vue --filter ./shell dev",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "reset:ports": "npx kill-port 4321 7100 7200 7300 7400"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
